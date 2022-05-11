@@ -9,6 +9,10 @@ def DegreeTrans(theta):
 # Рассчитать угол с помощью преобразования Хафа
 def CalcDegree(srcImage):
     midImage = cv2.cvtColor(srcImage, cv2.COLOR_BGR2GRAY)
+    # new_img = cv2.threshold(midImage, 150, 255, cv2.THRESH_BINARY)
+    # cv2.imshow("Imagelines", new_img)
+    # cv2.waitKey(0)
+
     dstImage = cv2.Canny(midImage, 50, 200, 3)
     # cv2.imshow("dstImage", dstImage)
     # cv2.waitKey(0)
