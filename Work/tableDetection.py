@@ -51,10 +51,13 @@ def tableDetect(img):
 
     ogr = round(max(img.shape[0], img.shape[1]) * 0.05)
     delta = round(ogr / 2 + 0.5)
+    table_list = []
 
     for i in range(0, len(contours)):
         x, y, w, h = cv2.boundingRect(contours[i])
         if h > delta and w > delta and (hierarchy[0, i, 3] == 0 or hierarchy[0, i, 2] == 0):
-            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
+            # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
+            table_list.append(img[int(y):int(y + h), int(x):int(x + w)])
 
-    return img
+
+    return img, table_list
