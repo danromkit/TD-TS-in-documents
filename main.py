@@ -7,7 +7,7 @@ import pytesseract
 
 from Work.tableStructerRecognation import recognizeStructer
 
-file_pdf = 'pdf/Поставка оборудования связи Администрация Тюмень_ТН.pdf'
+file_pdf = 'pdf/'
 
 pages = convert_from_path(file_pdf, 96)
 print(pages)

@@ -15,12 +15,52 @@ def recognizeStructer(img):
     # cv2.imshow("thresh_1", thresh1)
     # cv2.waitKey(0)
 
-    hor_kernel = np.ones((1, 25), np.uint8)
+    hor_kernel = np.ones((1, 27), np.uint8)
     erosion_hor = cv2.erode(thresh1, hor_kernel, iterations=1)
     # cv2.imshow("erosion_hor", erosion_hor)
     # cv2.waitKey(0)
     dilation_hor = cv2.dilate(erosion_hor, hor_kernel, iterations=1)
+    cv2.imshow("dilation_hor", dilation_hor)
+    cv2.waitKey(0)
 
+
+    #Утолщение горизонтальных линий
+    count_hor_start_end_lines_i = []
+    count_hor_start_lines_j = []
+    count_hor_end_lines_i = []
+    count_hor_end_lines_j = []
+    count_hor_lines = 0
+    for i in range(dilation_hor.shape[0]):
+        count = 0
+        for j in range(dilation_hor.shape[1]):
+            if dilation_hor[i][j] == 255:
+                count += 1
+        if count >= 10:
+            count_hor_lines += 1
+            for j in range(dilation_hor.shape[1]):
+                if dilation_hor[i][j] == 255:
+                    count_hor_start_end_lines_i.append(i)
+                    count_hor_start_lines_j.append(j)
+                    break
+            for k in range(dilation_hor.shape[1] - 1, 0, -1):
+                if dilation_hor[i][k] == 255:
+                    count_hor_end_lines_j.append(k)
+                    break
+        else:
+            if len(count_hor_start_lines_j) != 0 and len(count_hor_end_lines_j) != 0:
+                min_start_lines = min(count_hor_start_lines_j)
+                max_end_lines = max(count_hor_end_lines_j)
+                for p in count_hor_start_end_lines_i:
+                    for j in range(min_start_lines, max_end_lines + 1):
+                        dilation_hor[p][j] = 255
+                count_hor_start_end_lines_i = []
+                count_hor_start_lines_j = []
+                count_hor_end_lines_j = []
+
+    cv2.imshow("dilation_hor_1", dilation_hor)
+    cv2.waitKey(0)
+
+    #Удаление лишних
     # max_hor_1 = 0
     # max_hor_2 = 0
     # count = 0
@@ -77,9 +117,11 @@ def recognizeStructer(img):
     #         #     # max_hor_2i = 0
     #         #     # flag1 = False
     #         #     # flag2 = False
-
-    cv2.imshow("dilation_hor", dilation_hor)
-    cv2.waitKey(0)
+    #
+    #
+    # # dilation_hor
+    # cv2.imshow("dilation_hor_2", dilation_hor)
+    # cv2.waitKey(0)
 
     ver_kernel = np.ones((15, 1), np.uint8)
     erosion_ver = cv2.erode(thresh1, ver_kernel, iterations=1)
@@ -90,8 +132,8 @@ def recognizeStructer(img):
     cv2.waitKey(0)
 
     crossing_lines = cv2.bitwise_and(dilation_hor, dilation_ver)
-    # cv2.imshow("crossing_lines", crossing_lines)
-    # cv2.waitKey(0)
+    cv2.imshow("crossing_lines", crossing_lines)
+    cv2.waitKey(0)
 
     for i in range(crossing_lines.shape[0] - 2):
         for j in range(crossing_lines.shape[1] - 2):
