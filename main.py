@@ -5,7 +5,8 @@ from Work.rotateDocument import CalcDegree
 from Work.tableDetection import tableDetect
 import pytesseract
 
-from Work.tableStructerRecognation import recognizeStructer
+# from Work.tableStructerRecognation import recognizeStructer
+from Work.tableStructerRecognationV1 import recognizeStructerV1
 
 file_pdf = 'pdf/..'
 
@@ -29,12 +30,13 @@ cv2.imshow("tableDetect", rotate_img)
 cv2.waitKey(0)
 
 for table in table_list:
-    recognizeStructer(table)
+    # recognizeStructer(table)
+    recognizeStructerV1(table)
     # table_text = pytesseract.image_to_string(table, lang='rus+eng')
     # cv2.imshow("table in table_list", table)
     # cv2.waitKey(0)
     # print(table_text)
 
-print(len(table_list))
+# print(len(table_list))
 
 
