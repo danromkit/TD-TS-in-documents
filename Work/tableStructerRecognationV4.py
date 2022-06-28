@@ -2,16 +2,13 @@ import copy
 import cv2
 import numpy as np
 
-from Work.textRecognation import textRecognation
-
-
-def recognizeStructerV1(img):
+def recognizeStructerV4(img):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # cv2.imshow("img_gray", img_gray)
     # cv2.waitKey(0)
 
     _, thresh = cv2.threshold(img_gray, 200, 255, cv2.THRESH_BINARY)
-    # cv2.imshow("img_bin", thresh)
+    # cv2.imshow("thresh", thresh)
     # cv2.waitKey(0)
 
     thresh1 = cv2.bitwise_not(thresh)
@@ -34,7 +31,98 @@ def recognizeStructerV1(img):
                 erosion_hor[i][j] = 0
 
     dilation_hor = cv2.dilate(erosion_hor, hor_kernel, iterations=1)
+
+    # # Утолщение горизонтальных линий
+    # count_hor_start_end_lines_i = []
+    # count_hor_start_lines_j = []
+    # count_hor_end_lines_i = []
+    # count_hor_end_lines_j = []
+    #
+    # for i in range(dilation_hor.shape[0]):
+    #     count = 0
+    #     for j in range(dilation_hor.shape[1]):
+    #         if dilation_hor[i][j] == 255:
+    #             count += 1
+    #     if count >= 10:
+    #         for j in range(dilation_hor.shape[1]):
+    #             if dilation_hor[i][j] == 255:
+    #                 count_hor_start_end_lines_i.append(i)
+    #                 count_hor_start_lines_j.append(j)
+    #                 break
+    #         for k in range(dilation_hor.shape[1] - 1, 0, -1):
+    #             if dilation_hor[i][k] == 255:
+    #                 count_hor_end_lines_j.append(k)
+    #                 break
+    #     else:
+    #         if len(count_hor_start_lines_j) != 0 and len(count_hor_end_lines_j) != 0:
+    #             min_start_hor_lines = min(count_hor_start_lines_j)
+    #             max_end_hor_lines = max(count_hor_end_lines_j)
+    #             for p in count_hor_start_end_lines_i:
+    #                 for j in range(min_start_hor_lines, max_end_hor_lines + 1):
+    #                     dilation_hor[p][j] = 255
+    #             count_hor_start_end_lines_i = []
+    #             count_hor_start_lines_j = []
+    #             count_hor_end_lines_j = []
+
     # cv2.imshow("dilation_hor", dilation_hor)
+    # cv2.waitKey(0)
+
+    ver_kernel = np.ones((15, 1), np.uint8)
+    erosion_ver = cv2.erode(thresh1, ver_kernel, iterations=1)
+    # cv2.imshow("erosion_ver", erosion_ver)
+    # cv2.waitKey(0)
+    dilation_ver = cv2.dilate(erosion_ver, ver_kernel, iterations=1)
+
+    # # Утолщение вертикальных линий
+    # w = dilation_ver.shape[1]
+    # h = dilation_ver.shape[0]
+    # count_ver_start_end_lines_j = []
+    # count_ver_start_lines_i = []
+    # count_ver_end_lines_i = []
+    # count_ver_lines = 0
+    # for j in range(dilation_ver.shape[1]):
+    #     count = 0
+    #     for i in range(dilation_ver.shape[0]):
+    #         if dilation_ver[i][j] == 255:
+    #             count += 1
+    #     if count >= 10:
+    #         for i in range(dilation_ver.shape[0]):
+    #             if dilation_ver[i][j] == 255:
+    #                 count_ver_start_end_lines_j.append(j)
+    #                 count_ver_start_lines_i.append(i)
+    #                 break
+    #         for k in range(dilation_ver.shape[0] - 1, 0, -1):
+    #             if dilation_ver[k][j] == 255:
+    #                 count_ver_end_lines_i.append(k)
+    #                 break
+    #     else:
+    #         if len(count_ver_start_lines_i) != 0 and len(count_ver_end_lines_i) != 0:
+    #             min_start_ver_lines = min(count_ver_start_lines_i)
+    #             max_end_ver_lines = max(count_ver_end_lines_i)
+    #             for i in range(min_start_ver_lines, max_end_ver_lines + 1):
+    #                 for p in count_ver_start_end_lines_j:
+    #                     dilation_ver[i][p] = 255
+    #             count_ver_start_end_lines_j = []
+    #             count_ver_start_lines_i = []
+    #             count_ver_end_lines_i = []
+
+    # cv2.imshow("dilation_ver", dilation_ver)
+    # cv2.waitKey(0)
+
+    img_vh = cv2.addWeighted(dilation_ver, 0.5, dilation_hor, 0.5, 0.0)
+    _, table = cv2.threshold(img_vh, 50, 255, cv2.THRESH_BINARY)
+    # table = cv2.bitwise_not(table)
+    # cv2.imshow("table", table)
+    # cv2.waitKey(0)
+
+    bitor = cv2.bitwise_or(table, thresh)
+    # cv2.imshow("bitor", bitor)
+    # cv2.waitKey(0)
+
+    bitor = cv2.bitwise_not(bitor)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 6))
+    closed = cv2.morphologyEx(bitor, cv2.MORPH_CLOSE, kernel)
+    # cv2.imshow("closed", closed)
     # cv2.waitKey(0)
 
     # Поиск крайней левой и крайней правой точки (j)
@@ -148,43 +236,36 @@ def recognizeStructerV1(img):
                 dilation_hor[max_one_hor_line][k] = 255
             one_hor_line = []
 
-    # # Удаление линий, у которых меньше всего пикселей со значением 255
-    # i_max_hor_in_line = []
-    # for i in range(dilation_hor.shape[0]):
-    #     count = 0
-    #     for j in range(dilation_hor.shape[1]):
-    #         if dilation_hor[i][j] == 255:
-    #             count += 1
-    #     if count != 0:
-    #         index_value = [i, count]
-    #         # count_max_hor_in_line.append(count)
-    #         i_max_hor_in_line.append(index_value)
-    #     elif count == 0 and len(i_max_hor_in_line) != 0:
-    #         maximum = 0
-    #         for k in range(len(i_max_hor_in_line)):
-    #             if i_max_hor_in_line[k][1] >= maximum:
-    #                 maximum = i_max_hor_in_line[k][1]
-    #
-    #         for k in range(len(i_max_hor_in_line)):
-    #             if maximum in i_max_hor_in_line[k]:
-    #                 i_max_hor_in_line[k][0] = 0
-    #                 i_max_hor_in_line[k][1] = 0
-    #
-    #         for i in range(len(i_max_hor_in_line)):
-    #             for j in range(dilation_hor.shape[1]):
-    #                 dilation_hor[i_max_hor_in_line[i][0]][j] = 0
-    #         i_max_hor_in_line = []
+    #Дорисовка линий, которые находятся между двумя длинными линиями
+    for i in range(48, max_start_ver_elem_1):
+        count = 0
+        for j in range(dilation_hor.shape[1]):
+            if dilation_hor[i][j] == 255:
+                count += 1
+        for j in range(dilation_hor.shape[1]):
+            if dilation_hor[i][j] == 255:
+                first_j = j
+        for j in range(dilation_hor.shape[1]):
+            if dilation_hor[i][j] == 255:
+                last_j = j
+        if count != 0:
+            count_closed_before = 0
+            count_closed_after = 0
+            for j in range(first_j + 1):
+                if closed[i][j] == 255:
+                    count_closed_before += 1
+            for j in range(closed.shape[1] - 1, last_j, -1):
+                if closed[i][j] == 255:
+                    count_closed_after += 1
+            if count_closed_before == 0:
+                for j in range(first_j + 1):
+                    dilation_hor[i][j] = 255
+            if count_closed_after == 0:
+                for j in range(dilation_hor.shape[1] - 1, last_j, -1):
+                    dilation_hor[i][j] = 255
 
-    # cv2.imshow("dilation_hor_1_up", dilation_hor)
-    # cv2.waitKey(0)
-
-    ver_kernel = np.ones((15, 1), np.uint8)
-    erosion_ver = cv2.erode(thresh1, ver_kernel, iterations=1)
-    # cv2.imshow("erosion_ver", erosion_ver)
-    # cv2.waitKey(0)
-    dilation_ver = cv2.dilate(erosion_ver, ver_kernel, iterations=1)
-    # cv2.imshow("dilation_ver", dilation_ver)
-    # cv2.waitKey(0)
+    cv2.imshow("dilation_hor_result", dilation_hor)
+    cv2.waitKey(0)
 
     # Поиск крайней верхней и крайней нижней точки (i)
     ver_start_lines_i = []
@@ -270,27 +351,13 @@ def recognizeStructerV1(img):
         dilation_ver[i][min_last_ver_j] = 255
     for i in range(min_start_ver_elem_vertical, max_start_ver_elem_vertical + 1):
         dilation_ver[i][max_last_ver_j] = 255
-    # if first_flag > second_flag:
-    #     for i in range(min_start_ver_elem_vertical, max_start_ver_elem_vertical + 1):
-    #         dilation_ver[i][min_last_ver_j] = 255
-    #
-    # if first_flag < second_flag:
-    #     for i in range(min_start_ver_elem_vertical, max_start_ver_elem_vertical + 1):
-    #         dilation_ver[i][max_last_ver_j] = 255
-    #
-    # if first_flag == second_flag:
-    #     for i in range(min_start_ver_elem_vertical, max_start_ver_elem_vertical + 1):
-    #         dilation_ver[i][min_last_ver_j] = 255
-    #     for i in range(min_start_ver_elem_vertical, max_start_ver_elem_vertical + 1):
-    #         dilation_ver[i][max_last_ver_j] = 255
 
-    # cv2.imshow("dilation_ver", dilation_ver)
-    # cv2.waitKey(0)
+    cv2.imshow("dilation_ver_result", dilation_ver)
+    cv2.waitKey(0)
 
-    # erode_img_vh = cv2.addWeighted(erosion_ver, 0.5, erosion_hor, 0.5, 0.0)
-    # cv2.imshow("erode_img_vh", erode_img_vh)
-    # cv2.waitKey(0)
     img_vh = cv2.addWeighted(dilation_ver, 0.5, dilation_hor, 0.5, 0.0)
+    # cv2.imshow("table", img_vh)
+    # cv2.waitKey(0)
 
     for i in range(img_vh.shape[0]):
         for j in range(max_last_ver_j):
@@ -308,25 +375,28 @@ def recognizeStructerV1(img):
     # cv2.imshow("img_vh", img_vh)
     # cv2.waitKey(0)
 
+    # text_vh = cv2.addWeighted(img_vh, 0.5, closed, 0.5, 0.0)
+    # cv2.imshow("text_vh", text_vh)
+    # cv2.waitKey(0)
+
     contours, hierarchy = cv2.findContours(img_vh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     box = []
     for i in range(0, len(contours)):
         x, y, w, h = cv2.boundingRect(contours[i])
         if w < 0.9 * img_vh.shape[1] and h < 0.9 * img_vh.shape[0] and h > 0.02 * img_vh.shape[0]:
-            # image = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 1)
+            image = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 1)
             box.append([x, y, w, h])
             # cv2.imshow("image", img)
             # cv2.waitKey(0)
 
-    # cv2.imshow("image", image)
-    # cv2.waitKey(0)
+    cv2.imshow("image", image)
+    cv2.waitKey(0)
 
     print(box)
     box.sort(key=lambda x: (x[1], x[0]))
 
     for i in box:
-        # pass
-        textRecognation(img[i[1]:(i[1] + i[3]), i[0] : (i[0] + i[2])])
+        pass
+        # textRecognation(img[i[1]:(i[1] + i[3]), i[0] : (i[0] + i[2])])
         # cv2.imshow(f"box{i}", img[i[1]:(i[1] + i[3]), i[0] : (i[0] + i[2])])
         # cv2.waitKey(0)
-
