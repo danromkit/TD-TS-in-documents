@@ -7,7 +7,7 @@ def DegreeTrans(theta):
     return res
 
 # Рассчитать угол с помощью преобразования Хафа
-def CalcDegree(srcImage):
+def CalcDegreeV1(srcImage):
     midImage = cv2.cvtColor(srcImage, cv2.COLOR_BGR2GRAY)
     # new_img = cv2.threshold(midImage, 150, 255, cv2.THRESH_BINARY)
     # cv2.imshow("Imagelines", new_img)
@@ -20,8 +20,11 @@ def CalcDegree(srcImage):
 
     # Обнаружение прямых линий по преобразованию Хафа
     # Четвертый параметр - это порог, чем больше порог, тем выше точность обнаружения
-    lines = cv2.HoughLines(dstImage, 1, np.pi / 180, 140, srn=0, stn=0,  min_theta=1.39626, max_theta=1.74533) #1.562
-    # Из-за разных изображений порог установить нелегко, так как он установлен слишком высоко, поэтому линия не может быть обнаружена, порог слишком низкий, линия слишком большая, скорость очень низкая
+    # lines = cv2.HoughLines(dstImage, 1, np.pi / 180, 140, srn=0, stn=0,  min_theta=1.39626, max_theta=1.74533) #1.562
+    # lines = cv2.HoughLines(dstImage, 1, np.pi / 180, 140, srn=0, stn=0,  min_theta=1.5708, max_theta=1.65806) #1.562 право
+    # lines = cv2.HoughLines(dstImage, 1, np.pi / 180, 140, srn=0, stn=0, min_theta=1.48353, max_theta=1.5708)  # 1.562 лево
+    lines = cv2.HoughLines(dstImage, 2, np.pi / 180, 140)  # 1.562
+
     sum = 0
     # Нарисуйте каждый отрезок по очереди
     for i in range(len(lines)):
@@ -44,11 +47,13 @@ def CalcDegree(srcImage):
     # Усредняя все углы, эффект вращения будет лучше
     average = sum / len(lines)
     angle = DegreeTrans(average) - 90
+    print("angle", angle)
     # Центр вращения является центром изображения
     h, w = srcImage.shape[:2]
     # Рассчитать 2D повернутую матрицу аффинного преобразования
-    RotateMatrix = cv2.getRotationMatrix2D((w / 2.0, h / 2.0), angle / 2, 1)
+    RotateMatrix = cv2.getRotationMatrix2D((w / 2.0, h / 2.0), angle, 1)
     # print(RotateMatrix)
     # Аффинное преобразование, цвет фона заполнен белым
     rotate = cv2.warpAffine(srcImage, RotateMatrix, (w, h), borderValue=(255, 255, 255))
+
     return rotate

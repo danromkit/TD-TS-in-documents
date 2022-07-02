@@ -2,6 +2,9 @@ import copy
 import cv2
 import numpy as np
 
+from Work.textRecognation import textRecognation
+
+
 def recognizeStructerV4(img):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # cv2.imshow("img_gray", img_gray)
@@ -67,11 +70,13 @@ def recognizeStructerV4(img):
     # cv2.imshow("dilation_hor", dilation_hor)
     # cv2.waitKey(0)
 
-    ver_kernel = np.ones((15, 1), np.uint8)
+    ver_kernel = np.ones((21, 1), np.uint8)  # 15, 1
     erosion_ver = cv2.erode(thresh1, ver_kernel, iterations=1)
     # cv2.imshow("erosion_ver", erosion_ver)
     # cv2.waitKey(0)
     dilation_ver = cv2.dilate(erosion_ver, ver_kernel, iterations=1)
+    # cv2.imshow("dilation_ver", dilation_ver)
+    # cv2.waitKey(0)
 
     # # Утолщение вертикальных линий
     # w = dilation_ver.shape[1]
@@ -111,6 +116,16 @@ def recognizeStructerV4(img):
 
     img_vh = cv2.addWeighted(dilation_ver, 0.5, dilation_hor, 0.5, 0.0)
     _, table = cv2.threshold(img_vh, 50, 255, cv2.THRESH_BINARY)
+    # cv2.imshow("table", table)
+    # cv2.waitKey(0)
+    # vertical_kernel_for_table = np.ones((21, 1), np.uint8)
+    # table_erosian_ver = cv2.erode(table, vertical_kernel_for_table, iterations=1)
+    # cv2.imshow("table_erosian_ver", table_erosian_ver)
+    # cv2.waitKey(0)
+    # table_dilation_ver = cv2.dilate(table_erosian_ver, vertical_kernel_for_table, iterations=1)
+    # cv2.imshow("table_dilation_ver", table_dilation_ver)
+    # cv2.waitKey(0)
+
     # table = cv2.bitwise_not(table)
     # cv2.imshow("table", table)
     # cv2.waitKey(0)
@@ -120,10 +135,10 @@ def recognizeStructerV4(img):
     # cv2.waitKey(0)
 
     bitor = cv2.bitwise_not(bitor)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 6))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 11))  # 7, 6  (7, 10)
     closed = cv2.morphologyEx(bitor, cv2.MORPH_CLOSE, kernel)
-    # cv2.imshow("closed", closed)
-    # cv2.waitKey(0)
+    cv2.imshow("closed", closed)
+    cv2.waitKey(0)
 
     # Поиск крайней левой и крайней правой точки (j)
     count_hor_start_end_lines_i = []
@@ -223,7 +238,7 @@ def recognizeStructerV4(img):
 
     # Дорисовка линий, которые находятся сверху
     one_hor_line = []
-    for i in range(0, max_start_ver_elem_up_1 - 1):
+    for i in range(0, max_start_ver_elem_up_1 - 1) : # range(max_start_ver_elem_up, -1, -1)
         count = 0
         for j in range(min_start_hor_elem, max_start_hor_elem):
             if dilation_hor[i][j] == 255:
@@ -231,12 +246,12 @@ def recognizeStructerV4(img):
         if count != 0:
             one_hor_line.append(i)
         if count == 0 and len(one_hor_line) != 0:
-            max_one_hor_line = max(one_hor_line)
+            max_one_hor_line = max(one_hor_line) # max(one_hor_line)
             for k in range(min_start_hor_elem, max_start_hor_elem):
                 dilation_hor[max_one_hor_line][k] = 255
             one_hor_line = []
 
-    #Дорисовка линий, которые находятся между двумя длинными линиями
+    # Дорисовка линий, которые находятся между двумя длинными линиями
     for i in range(48, max_start_ver_elem_1):
         count = 0
         for j in range(dilation_hor.shape[1]):
@@ -264,8 +279,8 @@ def recognizeStructerV4(img):
                 for j in range(dilation_hor.shape[1] - 1, last_j, -1):
                     dilation_hor[i][j] = 255
 
-    cv2.imshow("dilation_hor_result", dilation_hor)
-    cv2.waitKey(0)
+    # cv2.imshow("dilation_hor_result", dilation_hor)
+    # cv2.waitKey(0)
 
     # Поиск крайней верхней и крайней нижней точки (i)
     ver_start_lines_i = []
@@ -352,8 +367,8 @@ def recognizeStructerV4(img):
     for i in range(min_start_ver_elem_vertical, max_start_ver_elem_vertical + 1):
         dilation_ver[i][max_last_ver_j] = 255
 
-    cv2.imshow("dilation_ver_result", dilation_ver)
-    cv2.waitKey(0)
+    # cv2.imshow("dilation_ver_result", dilation_ver)
+    # cv2.waitKey(0)
 
     img_vh = cv2.addWeighted(dilation_ver, 0.5, dilation_hor, 0.5, 0.0)
     # cv2.imshow("table", img_vh)
@@ -372,8 +387,8 @@ def recognizeStructerV4(img):
     _, img_vh = cv2.threshold(img_vh, 100, 255, cv2.THRESH_BINARY)
 
     img_vh = cv2.bitwise_not(img_vh)
-    # cv2.imshow("img_vh", img_vh)
-    # cv2.waitKey(0)
+    cv2.imshow("img_vh", img_vh)
+    cv2.waitKey(0)
 
     # text_vh = cv2.addWeighted(img_vh, 0.5, closed, 0.5, 0.0)
     # cv2.imshow("text_vh", text_vh)
@@ -383,7 +398,7 @@ def recognizeStructerV4(img):
     box = []
     for i in range(0, len(contours)):
         x, y, w, h = cv2.boundingRect(contours[i])
-        if w < 0.9 * img_vh.shape[1] and h < 0.9 * img_vh.shape[0] and h > 0.02 * img_vh.shape[0]:
+        if w < 0.9 * img_vh.shape[1] and h < 0.9 * img_vh.shape[0] and h > 0.03 * img_vh.shape[0]:  # 0.03 0.073
             image = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 1)
             box.append([x, y, w, h])
             # cv2.imshow("image", img)
@@ -397,6 +412,12 @@ def recognizeStructerV4(img):
 
     for i in box:
         pass
-        # textRecognation(img[i[1]:(i[1] + i[3]), i[0] : (i[0] + i[2])])
+        # cv2.imshow(f"box{i}", img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
+        # cv2.waitKey(0)
+        # texts = textRecognation(img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
+        # textRecognation(img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
         # cv2.imshow(f"box{i}", img[i[1]:(i[1] + i[3]), i[0] : (i[0] + i[2])])
         # cv2.waitKey(0)
+
+    # for text in texts:
+    #     print(text)

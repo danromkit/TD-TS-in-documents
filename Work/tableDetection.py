@@ -17,6 +17,15 @@ def tableDetect(img):
 
     hor_kernel = np.ones((1, 25), np.uint8)
     erosion_hor = cv2.erode(thresh1, hor_kernel, iterations=1)
+    # Очистка от случайных горизонтальных линий (можно улучшить)
+    for i in range(erosion_hor.shape[0]):
+        count = 0
+        for j in range(erosion_hor.shape[1]):
+            if erosion_hor[i][j] == 255:
+                count += 1
+        if count <= 15:
+            for j in range(erosion_hor.shape[1]):
+                erosion_hor[i][j] = 0
     # cv2.imshow("erosion_hor", erosion_hor)
     # cv2.waitKey(0)
     dilation_hor = cv2.dilate(erosion_hor, hor_kernel, iterations=1)
@@ -44,9 +53,6 @@ def tableDetect(img):
             if ready_img[i, j] < 140:
                 ready_img[i, j] = 0
 
-    # cv2.imshow("ready_img_1", ready_img)
-    # cv2.waitKey(0)
-
     contours, hierarchy = cv2.findContours(ready_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # CHAIN_APPROX_TC89_L1
 
     ogr = round(max(img.shape[0], img.shape[1]) * 0.05)
@@ -55,7 +61,7 @@ def tableDetect(img):
 
     for i in range(0, len(contours)):
         x, y, w, h = cv2.boundingRect(contours[i])
-        if h > delta and w > delta and (hierarchy[0, i, 3] == 0 or hierarchy[0, i, 2] == 0):
+        if h > delta / 1.1 and w > delta and (hierarchy[0, i, 3] == 0 or hierarchy[0, i, 2] == 0):
             # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
             table_list.append(img[int(y):int(y + h), int(x):int(x + w)])
 
