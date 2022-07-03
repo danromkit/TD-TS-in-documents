@@ -1,13 +1,13 @@
 import copy
 import functools
-
+import pandas as pd
 import cv2
 import numpy as np
 
-from Work.textRecognation import textRecognation
+from Work.textRecognation import textRecognation, textRecognationV1
 
 
-def custom_tuple_sorting(s, t, offset=4):
+def custom_tuple_sorting(s, t, offset=10):
     x0, y0, _, _ = s
     x1, y1, _, _ = t
     if abs(y0 - y1) > offset:
@@ -158,8 +158,8 @@ def recognizeStructerV4(img):
     bitor = cv2.bitwise_not(bitor)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 11))  # 7, 6  (7, 10)
     closed = cv2.morphologyEx(bitor, cv2.MORPH_CLOSE, kernel)
-    cv2.imshow("closed", closed)
-    cv2.waitKey(0)
+    # cv2.imshow("closed", closed)
+    # cv2.waitKey(0)
 
     # Поиск крайней левой и крайней правой точки (j)
     count_hor_start_end_lines_i = []
@@ -408,8 +408,8 @@ def recognizeStructerV4(img):
     _, img_vh = cv2.threshold(img_vh, 100, 255, cv2.THRESH_BINARY)
 
     img_vh = cv2.bitwise_not(img_vh)
-    cv2.imshow("img_vh", img_vh)
-    cv2.waitKey(0)
+    # cv2.imshow("img_vh", img_vh)
+    # cv2.waitKey(0)
 
     # text_vh = cv2.addWeighted(img_vh, 0.5, closed, 0.5, 0.0)
     # cv2.imshow("text_vh", text_vh)
@@ -428,16 +428,44 @@ def recognizeStructerV4(img):
     # cv2.imshow("image", image)
     # cv2.waitKey(0)
 
-    box.sort(key=functools.cmp_to_key(lambda s, t: custom_tuple_sorting(s, t, 4)))
+    box.sort(key=functools.cmp_to_key(lambda s, t: custom_tuple_sorting(s, t, 10)))
 
-    for i in box:
-        # pass
-        # cv2.imshow(f"box{i}", img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
-        # cv2.waitKey(0)
-        # texts = textRecognation(img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
-        textRecognation(img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
-        # cv2.imshow(f"box{i}", img[i[1]:(i[1] + i[3]), i[0] : (i[0] + i[2])])
-        # cv2.waitKey(0)
+    row = []
+    table = []
+    for i in range(len(box)):
+        if i != len(box) - 1:
+            if abs(box[i][1] - box[i + 1][1]) < 10:
+                row.append(box[i])
+            else:
+                row.append(box[i])
+                table.append(row)
+                row = []
+        else:
+            row.append(box[i])
+            table.append(row)
+            row = []
+
+    print(table)
+
+    table_for_df = []
+    for row_i in table:
+        recognation_row = textRecognationV1(img, row_i)
+        table_for_df.append(recognation_row)
+
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_colwidth', None)
+    df = pd.DataFrame(table_for_df)
+    print(df)
+
+    # for i in box:
+    # pass
+    # cv2.imshow(f"box{i}", img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
+    # cv2.waitKey(0)
+    # texts = textRecognation(img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
+    # textRecognation(img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])], i, 4)
+    # cv2.imshow(f"box{i}", img[i[1]:(i[1] + i[3]), i[0] : (i[0] + i[2])])
+    # cv2.waitKey(0)
 
     # for text in texts:
     #     print(text)

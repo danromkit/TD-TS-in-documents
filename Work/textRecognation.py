@@ -3,9 +3,11 @@ import numpy as np
 import pytesseract
 
 recognation_text = []
+table_for_df = []
 
 
-def textRecognation(img):
+def textRecognation(img, box, offset):
+
     # cv2.imshow("img", img)
     # cv2.waitKey(0)
 
@@ -26,11 +28,19 @@ def textRecognation(img):
 
 
     # _, buf_img = cv2.threshold(buf_img, 170, 255, cv2.THRESH_BINARY)
+
     gray_box = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
     # gray_box = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     # gray_box = cv2.resize(gray_box, (0, 0), fx=2, fy=2)
     # cv2.imshow("big", gray_box)
     # cv2.waitKey(0)
+
+
+
+
+
+
 
     config = r'--oem 3 --psm 6'
 
@@ -67,3 +77,22 @@ def textRecognation(img):
     #
     # cv2.imshow("edgedImage", edgedImage)
     # cv2.waitKey(0)
+
+def textRecognationV1(img, row):
+    config = r'--oem 3 --psm 6'
+    row_for_df = []
+    sorted(row, key=lambda x: x[0])
+    for i in row:
+        img_1 = img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])]
+        gray_box = cv2.cvtColor(img_1, cv2.COLOR_BGR2RGB)
+        img_text = pytesseract.image_to_string(gray_box, lang='rus+eng', config=config)
+        row_for_df.append(img_text)
+        # cv2.imshow("img_1", img_1)
+        # cv2.waitKey(0)
+    # table_for_df.append(row_for_df)
+
+    return row_for_df
+
+
+
+
