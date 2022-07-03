@@ -1,8 +1,29 @@
 import copy
+import functools
+
 import cv2
 import numpy as np
 
 from Work.textRecognation import textRecognation
+
+
+def custom_tuple_sorting(s, t, offset=4):
+    x0, y0, _, _ = s
+    x1, y1, _, _ = t
+    if abs(y0 - y1) > offset:
+        if y0 < y1:
+            return -1
+        else:
+            return 1
+    else:
+        if x0 < x1:
+            return -1
+
+        elif x0 == x1:
+            return 0
+
+        else:
+            return 1
 
 
 def recognizeStructerV4(img):
@@ -238,7 +259,7 @@ def recognizeStructerV4(img):
 
     # Дорисовка линий, которые находятся сверху
     one_hor_line = []
-    for i in range(0, max_start_ver_elem_up_1 - 1) : # range(max_start_ver_elem_up, -1, -1)
+    for i in range(0, max_start_ver_elem_up_1 - 1):  # range(max_start_ver_elem_up, -1, -1)
         count = 0
         for j in range(min_start_hor_elem, max_start_hor_elem):
             if dilation_hor[i][j] == 255:
@@ -246,7 +267,7 @@ def recognizeStructerV4(img):
         if count != 0:
             one_hor_line.append(i)
         if count == 0 and len(one_hor_line) != 0:
-            max_one_hor_line = max(one_hor_line) # max(one_hor_line)
+            max_one_hor_line = max(one_hor_line)  # max(one_hor_line)
             for k in range(min_start_hor_elem, max_start_hor_elem):
                 dilation_hor[max_one_hor_line][k] = 255
             one_hor_line = []
@@ -399,23 +420,22 @@ def recognizeStructerV4(img):
     for i in range(0, len(contours)):
         x, y, w, h = cv2.boundingRect(contours[i])
         if w < 0.9 * img_vh.shape[1] and h < 0.9 * img_vh.shape[0] and h > 0.03 * img_vh.shape[0]:  # 0.03 0.073
-            image = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 1)
+            # image = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 1)
             box.append([x, y, w, h])
             # cv2.imshow("image", img)
             # cv2.waitKey(0)
 
-    cv2.imshow("image", image)
-    cv2.waitKey(0)
+    # cv2.imshow("image", image)
+    # cv2.waitKey(0)
 
-    print(box)
-    box.sort(key=lambda x: (x[1], x[0]))
+    box.sort(key=functools.cmp_to_key(lambda s, t: custom_tuple_sorting(s, t, 4)))
 
     for i in box:
-        pass
+        # pass
         # cv2.imshow(f"box{i}", img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
         # cv2.waitKey(0)
         # texts = textRecognation(img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
-        # textRecognation(img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
+        textRecognation(img[i[1]:(i[1] + i[3]), i[0]: (i[0] + i[2])])
         # cv2.imshow(f"box{i}", img[i[1]:(i[1] + i[3]), i[0] : (i[0] + i[2])])
         # cv2.waitKey(0)
 
