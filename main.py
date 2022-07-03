@@ -6,7 +6,7 @@ from Work.tableDetection import tableDetect
 from Work.tableStructerRecognationV4 import recognizeStructerV4
 from Work.rotateDocumentV4 import rotateDocumentV4
 
-file_pdf = 'pdf/Поставка оборудования связи Администрация Тюмень_СФ.pdf'
+file_pdf = 'pdf/..'
 
 pages = convert_from_path(file_pdf, 166)  # 96
 print(pages)

@@ -4,7 +4,7 @@ import pandas as pd
 import cv2
 import numpy as np
 
-from Work.textRecognation import textRecognation, textRecognationV1
+from Work.textRecognation import textRecognation, textRecognationV1, textRecognationV1Row1
 
 
 def custom_tuple_sorting(s, t, offset=10):
@@ -445,11 +445,25 @@ def recognizeStructerV4(img):
             table.append(row)
             row = []
 
-    print(table)
+    max_val = 0
+    for i in range(len(table) - 1):
+        if len(table[i]) >= max_val:
+            max_len_row = i
+            max_val = len(table[i])
+
+    columns = []
+    print(len(table[max_len_row]) - 1)
+    for j in range(len(table[max_len_row])):
+        columns.append(table[max_len_row][j][0])
+
+    print(columns)
 
     table_for_df = []
-    for row_i in table:
-        recognation_row = textRecognationV1(img, row_i)
+    for row_i in range(len(table)):
+        # if row_i == 0:
+        #     recognation_row = textRecognationV1Row1(img, table[row_i])
+        # else:
+        recognation_row = textRecognationV1(img, table[row_i], columns)
         table_for_df.append(recognation_row)
 
     pd.set_option('display.max_rows', None)
